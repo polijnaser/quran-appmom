@@ -1,36 +1,39 @@
-// Récupérer l'élément du DOM
-const surahsContainer = document.getElementById('surahs-container');
+// Récupérer les éléments du DOM
+const surahSelect = document.getElementById('surah-select');
+const versesContainer = document.getElementById('verses-container');
 
 // Variable pour stocker l'audio en cours
 let currentAudio = null;
 
-// Charger toutes les sourates
+// Charger la liste des sourates
 async function loadSurahs() {
   try {
     const response = await fetch('https://api.alquran.cloud/v1/surah');
     const data = await response.json();
 
-    // Afficher les sourates
+    // Ajouter les options au menu déroulant
     data.data.forEach(surah => {
-      const surahDiv = document.createElement('div');
-      surahDiv.className = 'surah';
-      surahDiv.innerHTML = `<h2>${surah.englishName} (${surah.name})</h2>`;
-
-      // Charger les versets de la sourate
-      loadVerses(surah.number, surahDiv);
-
-      surahsContainer.appendChild(surahDiv);
+      const option = document.createElement('option');
+      option.value = surah.number;
+      option.textContent = `${surah.number}. ${surah.englishName} (${surah.name})`;
+      surahSelect.appendChild(option);
     });
+
+    // Charger la première sourate par défaut
+    loadVerses(data.data[0].number);
   } catch (error) {
     console.error('Erreur lors du chargement des sourates :', error);
   }
 }
 
 // Charger les versets d'une sourate
-async function loadVerses(surahNumber, surahDiv) {
+async function loadVerses(surahNumber) {
   try {
     const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.alafasy`);
     const data = await response.json();
+
+    // Vider le conteneur des versets
+    versesContainer.innerHTML = '';
 
     // Afficher les versets
     data.data.ayahs.forEach((ayah, index) => {
@@ -59,12 +62,17 @@ async function loadVerses(surahNumber, surahDiv) {
         currentAudio.play();
       });
 
-      surahDiv.appendChild(verseDiv);
+      versesContainer.appendChild(verseDiv);
     });
   } catch (error) {
     console.error('Erreur lors du chargement des versets :', error);
   }
 }
+
+// Écouter les changements de sélection
+surahSelect.addEventListener('change', (event) => {
+  loadVerses(event.target.value);
+});
 
 // Charger les sourates au démarrage
 loadSurahs();
