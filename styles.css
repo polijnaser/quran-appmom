@@ -18,8 +18,12 @@ h1 {
   margin-bottom: 20px;
 }
 
-.surah {
+#surah-select {
+  padding: 10px;
+  font-size: 16px;
   margin-bottom: 20px;
+  width: 100%;
+  max-width: 300px;
 }
 
 .verse {
@@ -49,5 +53,9 @@ h1 {
 
   .verse {
     font-size: 16px;
+  }
+
+  #surah-select {
+    font-size: 14px;
   }
 }
