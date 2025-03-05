@@ -1,6 +1,9 @@
 // Récupérer l'élément du DOM
 const surahsContainer = document.getElementById('surahs-container');
 
+// Variable pour stocker l'audio en cours
+let currentAudio = null;
+
 // Charger toutes les sourates
 async function loadSurahs() {
   try {
@@ -29,31 +32,38 @@ async function loadVerses(surahNumber, surahDiv) {
     const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.alafasy`);
     const data = await response.json();
 
-    // Afficher uniquement les versets courts (moins de 10 mots par exemple)
-    data.data.ayahs.forEach(ayah => {
-      const words = ayah.text.split(' ').length;
-      if (words <= 10) { // Afficher uniquement les versets courts
-        const verseDiv = document.createElement('div');
-        verseDiv.className = 'verse';
-        verseDiv.textContent = ayah.text;
+    // Afficher les versets
+    data.data.ayahs.forEach((ayah, index) => {
+      const verseDiv = document.createElement('div');
+      verseDiv.className = 'verse';
+      verseDiv.innerHTML = `
+        <span class="verse-number">${index + 1}.</span>
+        ${ayah.text}
+      `;
 
-        // Ajouter un écouteur d'événement pour le clic
-        verseDiv.addEventListener('click', () => {
-          playAudio(ayah.audio);
+      // Ajouter un écouteur d'événement pour le clic
+      verseDiv.addEventListener('click', () => {
+        // Arrêter l'audio précédent
+        if (currentAudio) {
+          currentAudio.pause();
+        }
+
+        // Changer la couleur du verset touché
+        document.querySelectorAll('.verse.highlight').forEach(verse => {
+          verse.classList.remove('highlight');
         });
+        verseDiv.classList.add('highlight');
 
-        surahDiv.appendChild(verseDiv);
-      }
+        // Jouer l'audio du verset
+        currentAudio = new Audio(ayah.audio);
+        currentAudio.play();
+      });
+
+      surahDiv.appendChild(verseDiv);
     });
   } catch (error) {
     console.error('Erreur lors du chargement des versets :', error);
   }
-}
-
-// Jouer l'audio d'un verset
-function playAudio(audioUrl) {
-  const audio = new Audio(audioUrl);
-  audio.play();
 }
 
 // Charger les sourates au démarrage
