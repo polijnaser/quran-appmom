@@ -1,62 +1,60 @@
-// Récupérer les éléments du DOM
-const surahSelect = document.getElementById('surah-select');
-const versesContainer = document.getElementById('verses-container');
+// Récupérer l'élément du DOM
+const surahsContainer = document.getElementById('surahs-container');
 
-// Charger la liste des sourates
+// Charger toutes les sourates
 async function loadSurahs() {
   try {
     const response = await fetch('https://api.alquran.cloud/v1/surah');
     const data = await response.json();
 
-    // Ajouter les options au sélecteur
+    // Afficher les sourates
     data.data.forEach(surah => {
-      const option = document.createElement('option');
-      option.value = surah.number;
-      option.textContent = `${surah.number}. ${surah.englishName} (${surah.name})`;
-      surahSelect.appendChild(option);
-    });
+      const surahDiv = document.createElement('div');
+      surahDiv.className = 'surah';
+      surahDiv.innerHTML = `<h2>${surah.englishName} (${surah.name})</h2>`;
 
-    // Charger la première sourate par défaut
-    loadVerses(data.data[0].number);
+      // Charger les versets de la sourate
+      loadVerses(surah.number, surahDiv);
+
+      surahsContainer.appendChild(surahDiv);
+    });
   } catch (error) {
     console.error('Erreur lors du chargement des sourates :', error);
   }
 }
 
 // Charger les versets d'une sourate
-async function loadVerses(surahNumber) {
+async function loadVerses(surahNumber, surahDiv) {
   try {
-    const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/fr.asad`);
+    const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.alafasy`);
     const data = await response.json();
 
-    // Afficher les versets
-    versesContainer.innerHTML = '';
+    // Afficher uniquement les versets courts (moins de 10 mots par exemple)
     data.data.ayahs.forEach(ayah => {
-      const verseDiv = document.createElement('div');
-      verseDiv.className = 'verse';
+      const words = ayah.text.split(' ').length;
+      if (words <= 10) { // Afficher uniquement les versets courts
+        const verseDiv = document.createElement('div');
+        verseDiv.className = 'verse';
+        verseDiv.textContent = ayah.text;
 
-      // Texte du verset
-      const verseText = document.createElement('p');
-      verseText.textContent = ayah.text;
-      verseDiv.appendChild(verseText);
+        // Ajouter un écouteur d'événement pour le clic
+        verseDiv.addEventListener('click', () => {
+          playAudio(ayah.audio);
+        });
 
-      // Audio du verset
-      const audio = document.createElement('audio');
-      audio.controls = true;
-      audio.src = `https://cdn.alquran.cloud/media/audio/ayah/ar.alafasy/${ayah.number}`;
-      verseDiv.appendChild(audio);
-
-      versesContainer.appendChild(verseDiv);
+        surahDiv.appendChild(verseDiv);
+      }
     });
   } catch (error) {
     console.error('Erreur lors du chargement des versets :', error);
   }
 }
 
-// Écouter les changements de sélection
-surahSelect.addEventListener('change', (event) => {
-  loadVerses(event.target.value);
-});
+// Jouer l'audio d'un verset
+function playAudio(audioUrl) {
+  const audio = new Audio(audioUrl);
+  audio.play();
+}
 
 // Charger les sourates au démarrage
 loadSurahs();
